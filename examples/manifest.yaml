@@ -1,0 +1,95 @@
+# bypass manifest – create objectives, epics, and stories in one file.
+#
+# Run:
+#   bypass create --file examples/manifest.yaml
+#   bypass create --file examples/manifest.yaml --dry-run
+#   bypass create --file examples/manifest.yaml --template examples/epic_template.md
+
+# ---------------------------------------------------------------------------
+# Objectives
+# ---------------------------------------------------------------------------
+objectives:
+  - name: "Q3 2024 – Platform Reliability"
+    description: "Improve platform stability, reduce p99 latency, and eliminate toil."
+    state: "in progress"
+
+  - name: "Q3 2024 – Growth"
+    description: "Accelerate user acquisition and activation."
+    state: "to do"
+
+# ---------------------------------------------------------------------------
+# Epics
+#
+# Cross-references: use the exact 'name' of an objective defined above,
+# or supply the numeric Shortcut ID as a string (e.g. "42").
+#
+# owners / teams accept either a YAML list or a comma-separated string.
+# ---------------------------------------------------------------------------
+epics:
+  - name: "Observability Stack Upgrade"
+    description: "Replace legacy monitoring with OpenTelemetry and Grafana Cloud."
+    objective: "Q3 2024 – Platform Reliability"
+    owners:
+      - "Alice Johnson"
+      - "Bob Smith"
+    teams: "Platform, SRE"
+    labels: ["observability", "infrastructure"]
+    state: "in progress"
+    start_date: "2024-07-01"
+    deadline: "2024-09-30"
+
+  - name: "Onboarding Redesign"
+    description: "Streamline new-user onboarding flow to improve day-7 retention."
+    objective: "Q3 2024 – Growth"
+    owners: "Carol White"
+    teams:
+      - "Product"
+      - "Frontend"
+    labels: ["onboarding", "ux"]
+    state: "to do"
+    start_date: "2024-08-01"
+    deadline: "2024-10-15"
+    # Per-epic template overrides --template flag.
+    # template: "examples/epic_template.md"
+
+# ---------------------------------------------------------------------------
+# Stories
+#
+# Cross-references: use the exact 'name' of an epic defined above,
+# or supply the numeric Shortcut ID as a string (e.g. "9876").
+#
+# team accepts a single team name.
+# workflow_state must match an existing workflow state name in your workspace
+# (e.g. "Backlog", "Ready for Dev", "In Progress").
+# If omitted, the first unstarted state is used.
+# ---------------------------------------------------------------------------
+stories:
+  - name: "Instrument API gateway with OTel traces"
+    type: "feature"
+    description: "Add OpenTelemetry instrumentation to all API gateway routes."
+    epic: "Observability Stack Upgrade"
+    owners: "Alice Johnson"
+    team: "Platform"
+    labels: ["observability", "backend"]
+    estimate: 5
+    due_date: "2024-07-31"
+    workflow_state: "Backlog"
+
+  - name: "Set up Grafana Cloud workspace"
+    type: "chore"
+    description: "Provision Grafana Cloud org and configure data sources."
+    epic: "Observability Stack Upgrade"
+    owners:
+      - "Bob Smith"
+    team: "SRE"
+    estimate: 2
+    workflow_state: "Backlog"
+
+  - name: "User research – onboarding pain points"
+    type: "chore"
+    description: "Conduct 5 user interviews to identify top friction points in onboarding."
+    epic: "Onboarding Redesign"
+    owners: "Carol White"
+    team: "Product"
+    estimate: 3
+    workflow_state: "Backlog"

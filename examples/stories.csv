@@ -1,0 +1,4 @@
+name,type,description,epic,owners,team,labels,estimate,due_date,workflow_state
+"Instrument API gateway with OTel traces","feature","Add OTel instrumentation to all API gateway routes.","Observability Stack Upgrade","Alice Johnson","Platform","observability;backend","5","2024-07-31","Backlog"
+"Set up Grafana Cloud workspace","chore","Provision Grafana Cloud org and configure data sources.","Observability Stack Upgrade","Bob Smith","SRE","","2","","Backlog"
+"User research – onboarding pain points","chore","Conduct 5 user interviews.","Onboarding Redesign","Carol White","Product","","3","","Backlog"
