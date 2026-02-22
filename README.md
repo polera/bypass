@@ -167,7 +167,7 @@ Each line is one of the following event objects:
 
 ## Rate Limits
 
-The Shortcut API allows 200 requests per minute. `bypass` automatically retries on 429 (rate-limited), 500, 503, and 504 responses using exponential backoff (1 s base, 30 s cap, up to 5 retries). On 429 responses the `Retry-After` header is honoured when present.
+The Shortcut API allows 200 requests per minute. `bypass` automatically retries on 429 (rate-limited), 500, 503, and 504 responses using exponential backoff (`1s` base, `30s` cap, up to 5 retries). On 429 responses the `Retry-After` header is honored when present.
 
 ## Exit Codes
 
