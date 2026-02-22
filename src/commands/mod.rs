@@ -1,7 +1,7 @@
 mod create;
 
-use anyhow::Result;
 use crate::cli::{Cli, Commands};
+use anyhow::Result;
 
 pub async fn run(cli: Cli) -> Result<()> {
     match cli.command {

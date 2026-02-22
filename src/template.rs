@@ -24,9 +24,8 @@ pub struct Template {
 
 impl Template {
     pub fn load(path: &Path) -> Result<Self> {
-        let content = std::fs::read_to_string(path).map_err(|e| {
-            anyhow::anyhow!("Cannot read template '{}': {}", path.display(), e)
-        })?;
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| anyhow::anyhow!("Cannot read template '{}': {}", path.display(), e))?;
         Ok(Self { content })
     }
 
@@ -39,14 +38,8 @@ impl Template {
                 "description",
                 epic.description.as_deref().unwrap_or_default(),
             ),
-            (
-                "objective",
-                epic.objective.as_deref().unwrap_or_default(),
-            ),
-            (
-                "start_date",
-                epic.start_date.as_deref().unwrap_or_default(),
-            ),
+            ("objective", epic.objective.as_deref().unwrap_or_default()),
+            ("start_date", epic.start_date.as_deref().unwrap_or_default()),
             ("deadline", epic.deadline.as_deref().unwrap_or_default()),
         ];
 

@@ -1,5 +1,5 @@
-use anyhow::{anyhow, bail, Result};
-use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
+use anyhow::{Result, anyhow, bail};
+use calamine::{DataType, Range, Reader, Xlsx, open_workbook};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -73,7 +73,10 @@ pub fn parse(path: &Path, resource_type: Option<&ResourceType>) -> Result<InputF
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-fn get_range(workbook: &mut Xlsx<std::io::BufReader<std::fs::File>>, name: &str) -> Result<Range<DataType>> {
+fn get_range(
+    workbook: &mut Xlsx<std::io::BufReader<std::fs::File>>,
+    name: &str,
+) -> Result<Range<DataType>> {
     workbook
         .worksheet_range(name)
         .map_err(|e| anyhow!("Error reading sheet '{}': {}", name, e))
@@ -129,7 +132,10 @@ fn split_semi(s: &str) -> Vec<String> {
 
 fn objectives_from_range(range: &Range<DataType>) -> Result<Vec<InputObjective>> {
     let hdr = headers(range);
-    let name_col = hdr.get("name").copied().ok_or_else(|| anyhow!("Missing 'name' column"))?;
+    let name_col = hdr
+        .get("name")
+        .copied()
+        .ok_or_else(|| anyhow!("Missing 'name' column"))?;
     let mut out = Vec::new();
 
     for (i, row) in range.rows().enumerate() {
@@ -151,7 +157,10 @@ fn objectives_from_range(range: &Range<DataType>) -> Result<Vec<InputObjective>>
 
 fn epics_from_range(range: &Range<DataType>) -> Result<Vec<InputEpic>> {
     let hdr = headers(range);
-    let name_col = hdr.get("name").copied().ok_or_else(|| anyhow!("Missing 'name' column"))?;
+    let name_col = hdr
+        .get("name")
+        .copied()
+        .ok_or_else(|| anyhow!("Missing 'name' column"))?;
     let mut out = Vec::new();
 
     for (i, row) in range.rows().enumerate() {
@@ -166,9 +175,18 @@ fn epics_from_range(range: &Range<DataType>) -> Result<Vec<InputEpic>> {
             name,
             description: hdr.get("description").and_then(|&c| opt_cell(row, c)),
             objective: hdr.get("objective").and_then(|&c| opt_cell(row, c)),
-            owners: hdr.get("owners").map(|&c| split_semi(&cell_str(row, c))).unwrap_or_default(),
-            teams: hdr.get("teams").map(|&c| split_semi(&cell_str(row, c))).unwrap_or_default(),
-            labels: hdr.get("labels").map(|&c| split_semi(&cell_str(row, c))).unwrap_or_default(),
+            owners: hdr
+                .get("owners")
+                .map(|&c| split_semi(&cell_str(row, c)))
+                .unwrap_or_default(),
+            teams: hdr
+                .get("teams")
+                .map(|&c| split_semi(&cell_str(row, c)))
+                .unwrap_or_default(),
+            labels: hdr
+                .get("labels")
+                .map(|&c| split_semi(&cell_str(row, c)))
+                .unwrap_or_default(),
             state: hdr.get("state").and_then(|&c| opt_cell(row, c)),
             start_date: hdr.get("start_date").and_then(|&c| opt_cell(row, c)),
             deadline: hdr.get("deadline").and_then(|&c| opt_cell(row, c)),
@@ -180,7 +198,10 @@ fn epics_from_range(range: &Range<DataType>) -> Result<Vec<InputEpic>> {
 
 fn stories_from_range(range: &Range<DataType>) -> Result<Vec<InputStory>> {
     let hdr = headers(range);
-    let name_col = hdr.get("name").copied().ok_or_else(|| anyhow!("Missing 'name' column"))?;
+    let name_col = hdr
+        .get("name")
+        .copied()
+        .ok_or_else(|| anyhow!("Missing 'name' column"))?;
     let mut out = Vec::new();
 
     for (i, row) in range.rows().enumerate() {
@@ -196,9 +217,15 @@ fn stories_from_range(range: &Range<DataType>) -> Result<Vec<InputStory>> {
             story_type: hdr.get("type").and_then(|&c| opt_cell(row, c)),
             description: hdr.get("description").and_then(|&c| opt_cell(row, c)),
             epic: hdr.get("epic").and_then(|&c| opt_cell(row, c)),
-            owners: hdr.get("owners").map(|&c| split_semi(&cell_str(row, c))).unwrap_or_default(),
+            owners: hdr
+                .get("owners")
+                .map(|&c| split_semi(&cell_str(row, c)))
+                .unwrap_or_default(),
             team: hdr.get("team").and_then(|&c| opt_cell(row, c)),
-            labels: hdr.get("labels").map(|&c| split_semi(&cell_str(row, c))).unwrap_or_default(),
+            labels: hdr
+                .get("labels")
+                .map(|&c| split_semi(&cell_str(row, c)))
+                .unwrap_or_default(),
             estimate: hdr.get("estimate").and_then(|&c| opt_cell_i64(row, c)),
             due_date: hdr.get("due_date").and_then(|&c| opt_cell(row, c)),
             workflow_state: hdr.get("workflow_state").and_then(|&c| opt_cell(row, c)),

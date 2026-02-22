@@ -3,7 +3,7 @@ pub mod models;
 pub mod xlsx;
 pub mod yaml;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::path::Path;
 
 use crate::cli::ResourceType;

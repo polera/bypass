@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::path::PathBuf;
 
 pub struct Config {
@@ -19,16 +19,15 @@ impl Config {
         }
 
         // Fall through to config file.
-        if let Some(path) = config_file_path() {
-            if path.exists() {
-                let content = std::fs::read_to_string(&path)?;
-                if let Ok(cfg) = serde_yaml::from_str::<ConfigFile>(&content) {
-                    if let Some(t) = cfg.api_token {
-                        if !t.is_empty() {
-                            return Ok(Config { api_token: t });
-                        }
-                    }
-                }
+        if let Some(path) = config_file_path()
+            && path.exists()
+        {
+            let content = std::fs::read_to_string(&path)?;
+            if let Ok(cfg) = serde_yaml::from_str::<ConfigFile>(&content)
+                && let Some(t) = cfg.api_token
+                && !t.is_empty()
+            {
+                return Ok(Config { api_token: t });
             }
         }
 

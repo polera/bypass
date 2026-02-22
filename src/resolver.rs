@@ -88,10 +88,13 @@ impl Resolver {
     // ------------------------------------------------------------------
 
     pub fn resolve_member(&self, name: &str) -> Result<String> {
-        self.member_map
-            .get(name.trim())
-            .cloned()
-            .ok_or_else(|| BypassError::NameNotFound { resource_type: "user".into(), name: name.to_string() }.into())
+        self.member_map.get(name.trim()).cloned().ok_or_else(|| {
+            BypassError::NameNotFound {
+                resource_type: "user".into(),
+                name: name.to_string(),
+            }
+            .into()
+        })
     }
 
     pub fn resolve_members(&self, names: &[String]) -> Result<Vec<String>> {
@@ -99,10 +102,13 @@ impl Resolver {
     }
 
     pub fn resolve_group(&self, name: &str) -> Result<String> {
-        self.group_map
-            .get(name.trim())
-            .cloned()
-            .ok_or_else(|| BypassError::NameNotFound { resource_type: "team".into(), name: name.to_string() }.into())
+        self.group_map.get(name.trim()).cloned().ok_or_else(|| {
+            BypassError::NameNotFound {
+                resource_type: "team".into(),
+                name: name.to_string(),
+            }
+            .into()
+        })
     }
 
     pub fn resolve_groups(&self, names: &[String]) -> Result<Vec<String>> {
@@ -113,7 +119,13 @@ impl Resolver {
         self.workflow_state_map
             .get(name.trim())
             .copied()
-            .ok_or_else(|| BypassError::NameNotFound { resource_type: "workflow state".into(), name: name.to_string() }.into())
+            .ok_or_else(|| {
+                BypassError::NameNotFound {
+                    resource_type: "workflow state".into(),
+                    name: name.to_string(),
+                }
+                .into()
+            })
     }
 
     /// Resolve an objective by name.  Accepts a raw integer string as a
@@ -122,10 +134,13 @@ impl Resolver {
         if let Ok(id) = name.trim().parse::<i64>() {
             return Ok(id);
         }
-        self.objective_map
-            .get(name.trim())
-            .copied()
-            .ok_or_else(|| BypassError::NameNotFound { resource_type: "objective".into(), name: name.to_string() }.into())
+        self.objective_map.get(name.trim()).copied().ok_or_else(|| {
+            BypassError::NameNotFound {
+                resource_type: "objective".into(),
+                name: name.to_string(),
+            }
+            .into()
+        })
     }
 
     /// Resolve an epic by name.  Accepts a raw integer string as a
@@ -134,10 +149,13 @@ impl Resolver {
         if let Ok(id) = name.trim().parse::<i64>() {
             return Ok(id);
         }
-        self.epic_map
-            .get(name.trim())
-            .copied()
-            .ok_or_else(|| BypassError::NameNotFound { resource_type: "epic".into(), name: name.to_string() }.into())
+        self.epic_map.get(name.trim()).copied().ok_or_else(|| {
+            BypassError::NameNotFound {
+                resource_type: "epic".into(),
+                name: name.to_string(),
+            }
+            .into()
+        })
     }
 
     // ------------------------------------------------------------------

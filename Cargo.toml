@@ -20,5 +20,6 @@ clap        = { version = "4", features = ["derive", "env"] }
 csv         = "1"
 calamine    = "0.23"
 colored     = "2"
-indicatif   = "0.17"
+indicatif   = "0.18"
 dirs        = "5"
+unit-prefix = "0.5.2"

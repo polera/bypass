@@ -38,8 +38,7 @@ where
         .map_err(|e| anyhow::anyhow!("Failed to open CSV '{}': {}", path.display(), e))?;
     let mut items = Vec::new();
     for (i, result) in reader.deserialize::<R>().enumerate() {
-        let row =
-            result.map_err(|e| anyhow::anyhow!("CSV row {} parse error: {}", i + 2, e))?;
+        let row = result.map_err(|e| anyhow::anyhow!("CSV row {} parse error: {}", i + 2, e))?;
         items.push(convert(row));
     }
     Ok(items)

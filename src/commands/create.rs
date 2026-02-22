@@ -3,11 +3,11 @@ use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use serde_json::json;
 
-use crate::api::models::{
-    CreateEpicRequest, CreateLabelParams, CreateObjectiveRequest, CreateStoryRequest,
-    Epic, Objective, Story,
-};
 use crate::api::ShortcutClient;
+use crate::api::models::{
+    CreateEpicRequest, CreateLabelParams, CreateObjectiveRequest, CreateStoryRequest, Epic,
+    Objective, Story,
+};
 use crate::cli::{CreateArgs, OutputFormat};
 use crate::config::Config;
 use crate::input;
@@ -54,11 +54,10 @@ pub async fn run(args: CreateArgs, token: Option<String>) -> Result<()> {
         eprint!("{status_msg}");
     }
 
-    let mut resolver = Resolver::new(&client).await.map_err(|e| {
+    let mut resolver = Resolver::new(&client).await.inspect_err(|_| {
         if matches!(args.output, OutputFormat::Text) {
             eprintln!();
         }
-        e
     })?;
 
     if matches!(args.output, OutputFormat::Text) {
@@ -83,10 +82,19 @@ pub async fn run(args: CreateArgs, token: Option<String>) -> Result<()> {
                 Ok(created) => {
                     resolver.register_objective(obj.name.clone(), created.id);
                     results.objectives_ok += 1;
-                    emit_ok(&args.output, "objective", &created.name, created.id, created.app_url.as_deref(), &pb);
+                    emit_ok(
+                        &args.output,
+                        "objective",
+                        &created.name,
+                        created.id,
+                        created.app_url.as_deref(),
+                        &pb,
+                    );
                 }
                 Err(e) => {
-                    results.errors.push(format!("Objective '{}': {e}", obj.name));
+                    results
+                        .errors
+                        .push(format!("Objective '{}': {e}", obj.name));
                     emit_err(&args.output, "objective", &obj.name, &e.to_string(), &pb);
                 }
             }
@@ -113,7 +121,14 @@ pub async fn run(args: CreateArgs, token: Option<String>) -> Result<()> {
                 Ok(created) => {
                     resolver.register_epic(epic.name.clone(), created.id);
                     results.epics_ok += 1;
-                    emit_ok(&args.output, "epic", &created.name, created.id, created.app_url.as_deref(), &pb);
+                    emit_ok(
+                        &args.output,
+                        "epic",
+                        &created.name,
+                        created.id,
+                        created.app_url.as_deref(),
+                        &pb,
+                    );
                 }
                 Err(e) => {
                     results.errors.push(format!("Epic '{}': {e}", epic.name));
@@ -133,7 +148,14 @@ pub async fn run(args: CreateArgs, token: Option<String>) -> Result<()> {
             match build_and_create_story(&client, story, &resolver).await {
                 Ok(created) => {
                     results.stories_ok += 1;
-                    emit_ok(&args.output, "story", &created.name, created.id, created.app_url.as_deref(), &pb);
+                    emit_ok(
+                        &args.output,
+                        "story",
+                        &created.name,
+                        created.id,
+                        created.app_url.as_deref(),
+                        &pb,
+                    );
                 }
                 Err(e) => {
                     results.errors.push(format!("Story '{}': {e}", story.name));
@@ -147,10 +169,22 @@ pub async fn run(args: CreateArgs, token: Option<String>) -> Result<()> {
 
     // ---- Summary ----
     if matches!(args.output, OutputFormat::Text) {
-        println!("\n{}", "─── Summary ───────────────────────────────────".dimmed());
-        println!("  Objectives created : {}", results.objectives_ok.to_string().green());
-        println!("  Epics created      : {}", results.epics_ok.to_string().green());
-        println!("  Stories created    : {}", results.stories_ok.to_string().green());
+        println!(
+            "\n{}",
+            "─── Summary ───────────────────────────────────".dimmed()
+        );
+        println!(
+            "  Objectives created : {}",
+            results.objectives_ok.to_string().green()
+        );
+        println!(
+            "  Epics created      : {}",
+            results.epics_ok.to_string().green()
+        );
+        println!(
+            "  Stories created    : {}",
+            results.stories_ok.to_string().green()
+        );
         if !results.errors.is_empty() {
             println!(
                 "  Errors             : {}",
@@ -218,7 +252,7 @@ fn dry_run(
             validate_epic_state(state, &epic.name, &mut errors);
         }
         for owner in &epic.owners {
-            if resolver.member_map.get(owner.trim()).is_none() {
+            if !resolver.member_map.contains_key(owner.trim()) {
                 errors.push(format!(
                     "Epic '{}': unknown user '{}'. Available: {}",
                     epic.name,
@@ -228,7 +262,7 @@ fn dry_run(
             }
         }
         for team in &epic.teams {
-            if resolver.group_map.get(team.trim()).is_none() {
+            if !resolver.group_map.contains_key(team.trim()) {
                 errors.push(format!(
                     "Epic '{}': unknown team '{}'. Available: {}",
                     epic.name,
@@ -237,26 +271,25 @@ fn dry_run(
                 ));
             }
         }
-        if let Some(obj) = &epic.objective {
-            if obj.parse::<i64>().is_err()
-                && !batch_objectives.contains(obj.as_str())
-                && resolver.objective_map.get(obj.trim()).is_none()
-            {
-                errors.push(format!(
-                    "Epic '{}': objective '{obj}' not found in current batch \
+        if let Some(obj) = &epic.objective
+            && obj.parse::<i64>().is_err()
+            && !batch_objectives.contains(obj.as_str())
+            && !resolver.objective_map.contains_key(obj.trim())
+        {
+            errors.push(format!(
+                "Epic '{}': objective '{obj}' not found in current batch \
                      (use a numeric ID to reference a pre-existing objective)",
-                    epic.name
-                ));
-            }
+                epic.name
+            ));
         }
         // Check per-epic template file exists.
-        if let Some(tmpl_path) = &epic.template {
-            if !std::path::Path::new(tmpl_path).exists() {
-                errors.push(format!(
-                    "Epic '{}': template file '{tmpl_path}' not found",
-                    epic.name
-                ));
-            }
+        if let Some(tmpl_path) = &epic.template
+            && !std::path::Path::new(tmpl_path).exists()
+        {
+            errors.push(format!(
+                "Epic '{}': template file '{tmpl_path}' not found",
+                epic.name
+            ));
         }
     }
 
@@ -269,16 +302,16 @@ fn dry_run(
             errors.push("Story: 'name' is required".into());
             continue;
         }
-        if let Some(t) = &story.story_type {
-            if !["bug", "chore", "feature"].contains(&t.as_str()) {
-                errors.push(format!(
-                    "Story '{}': invalid type '{t}'. Must be 'bug', 'chore', or 'feature'",
-                    story.name
-                ));
-            }
+        if let Some(t) = &story.story_type
+            && !["bug", "chore", "feature"].contains(&t.as_str())
+        {
+            errors.push(format!(
+                "Story '{}': invalid type '{t}'. Must be 'bug', 'chore', or 'feature'",
+                story.name
+            ));
         }
         for owner in &story.owners {
-            if resolver.member_map.get(owner.trim()).is_none() {
+            if !resolver.member_map.contains_key(owner.trim()) {
                 errors.push(format!(
                     "Story '{}': unknown user '{}'. Available: {}",
                     story.name,
@@ -287,37 +320,36 @@ fn dry_run(
                 ));
             }
         }
-        if let Some(team) = &story.team {
-            if resolver.group_map.get(team.trim()).is_none() {
-                errors.push(format!(
-                    "Story '{}': unknown team '{}'. Available: {}",
-                    story.name,
-                    team,
-                    list_sample(resolver.available_groups())
-                ));
-            }
+        if let Some(team) = &story.team
+            && !resolver.group_map.contains_key(team.trim())
+        {
+            errors.push(format!(
+                "Story '{}': unknown team '{}'. Available: {}",
+                story.name,
+                team,
+                list_sample(resolver.available_groups())
+            ));
         }
-        if let Some(epic) = &story.epic {
-            if epic.parse::<i64>().is_err()
-                && !batch_epics.contains(epic.as_str())
-                && resolver.epic_map.get(epic.trim()).is_none()
-            {
-                errors.push(format!(
-                    "Story '{}': epic '{epic}' not found in current batch \
+        if let Some(epic) = &story.epic
+            && epic.parse::<i64>().is_err()
+            && !batch_epics.contains(epic.as_str())
+            && !resolver.epic_map.contains_key(epic.trim())
+        {
+            errors.push(format!(
+                "Story '{}': epic '{epic}' not found in current batch \
                      (use a numeric ID to reference a pre-existing epic)",
-                    story.name
-                ));
-            }
+                story.name
+            ));
         }
-        if let Some(ws) = &story.workflow_state {
-            if resolver.workflow_state_map.get(ws.trim()).is_none() {
-                errors.push(format!(
-                    "Story '{}': unknown workflow state '{}'. Available: {}",
-                    story.name,
-                    ws,
-                    list_sample(resolver.available_workflow_states())
-                ));
-            }
+        if let Some(ws) = &story.workflow_state
+            && !resolver.workflow_state_map.contains_key(ws.trim())
+        {
+            errors.push(format!(
+                "Story '{}': unknown workflow state '{}'. Available: {}",
+                story.name,
+                ws,
+                list_sample(resolver.available_workflow_states())
+            ));
         }
     }
 
@@ -329,7 +361,10 @@ fn dry_run(
     match output {
         OutputFormat::Text => {
             if errors.is_empty() {
-                println!("{} All validations passed – no resources created (dry run).", "✓".green());
+                println!(
+                    "{} All validations passed – no resources created (dry run).",
+                    "✓".green()
+                );
             } else {
                 println!("{} {} validation error(s):", "✗".red(), errors.len());
                 for e in &errors {
@@ -470,7 +505,12 @@ fn labels_param(names: &[String]) -> Option<Vec<CreateLabelParams>> {
     if names.is_empty() {
         None
     } else {
-        Some(names.iter().map(|n| CreateLabelParams { name: n.clone() }).collect())
+        Some(
+            names
+                .iter()
+                .map(|n| CreateLabelParams { name: n.clone() })
+                .collect(),
+        )
     }
 }
 
@@ -517,7 +557,14 @@ fn make_pb(len: u64, label: &str) -> ProgressBar {
     pb
 }
 
-fn emit_ok(output: &OutputFormat, kind: &str, name: &str, id: i64, url: Option<&str>, pb: &ProgressBar) {
+fn emit_ok(
+    output: &OutputFormat,
+    kind: &str,
+    name: &str,
+    id: i64,
+    url: Option<&str>,
+    pb: &ProgressBar,
+) {
     match output {
         OutputFormat::Text => {
             pb.println(format!(

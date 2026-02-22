@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use reqwest::Client;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 
 use super::models::*;

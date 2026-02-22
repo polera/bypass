@@ -6,7 +6,12 @@ use std::path::PathBuf;
 #[command(name = "bypass", version, about)]
 pub struct Cli {
     /// Shortcut API token [env: SHORTCUT_API_TOKEN]
-    #[arg(long, env = "SHORTCUT_API_TOKEN", global = true, hide_env_values = true)]
+    #[arg(
+        long,
+        env = "SHORTCUT_API_TOKEN",
+        global = true,
+        hide_env_values = true
+    )]
     pub token: Option<String>,
 
     #[command(subcommand)]
